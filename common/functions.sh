@@ -22,7 +22,7 @@ umount_mirrors() {
 
 cleanup() {
     if $KSU || [ $MAGISK_VER_CODE -ge 27000 ]; then umount_mirrors; fi
-    rm -rf "$MODPATH/common" "$MODPATH/changelog.md" "$MODPATH/LICENSE" "$MODPATH/logs" 2>/dev/null
+    rm -rf "$MODPATH/common" "$MODPATH/changelog.md" "$MODPATH/LICENSE" "$MODPATH/logs" "$MODPATH/update.json" 2>/dev/null
 }
 
 abort() {
