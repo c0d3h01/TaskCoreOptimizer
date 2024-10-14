@@ -4,6 +4,35 @@
 #
 ##########################################################################################
 
+setup_native_libs() {
+    case "$ARCH" in
+    arm)
+        mv -f "$MODPATH"/libs/armeabi_v7a/* "$MODPATH/libs"
+        rm -rf "$MODPATH/libs/armeabi_v7a" "$MODPATH/libs/arm64_v8a" "$MODPATH/libs/x86" "$MODPATH/libs/x86_64"
+        mv -f "$MODPATH/libs/task_optimizer_arm" "$MODPATH/libs/task_optimizer"
+        ;;
+
+    arm64)
+        mv -f "$MODPATH"/libs/arm64_v8a/* "$MODPATH/libs"
+        rm -rf "$MODPATH/libs/arm64_v8a" "$MODPATH/libs/armeabi_v7a" "$MODPATH/libs/x86" "$MODPATH/libs/x86_64"
+        mv -f "$MODPATH/libs/task_optimizer_arm64" "$MODPATH/libs/task_optimizer"
+        ;;
+
+    x86)
+        mv -f "$MODPATH"/libs/x86/* "$MODPATH/libs"
+        rm -rf "$MODPATH/libs/x86" "$MODPATH/libs/armeabi_v7a" "$MODPATH/libs/arm64_v8a" "$MODPATH/libs/x86_64"
+        mv -f "$MODPATH/libs/task_optimizer_x86" "$MODPATH/libs/task_optimizer"
+        ;;
+
+    x64)
+        mv -f "$MODPATH"/libs/x86_64/* "$MODPATH/libs"
+        rm -rf "$MODPATH/libs/x86_64" "$MODPATH/libs/armeabi_v7a" "$MODPATH/libs/x86" "$MODPATH/libs/arm64_v8a"
+        mv -f "$MODPATH/libs/task_optimizer_x86_64" "$MODPATH/libs/task_optimizer"
+        ;;
+
+    esac
+}
+
 require_new_ksu() {
     ui_print "**********************************"
     ui_print " Please install KernelSU v0.6.6+! "
@@ -182,6 +211,7 @@ mount_mirrors() {
 # Credits
 ui_print "**************************************"
 ui_print "*   MMT Extended by Zackptg5 @ XDA   *"
+ui_print "*   Modified by c0d3h01 @GitHub      *"
 ui_print "**************************************"
 ui_print " "
 
@@ -290,7 +320,7 @@ fi
 
 ### Install
 ui_print "- Installing"
-
+setup_native_libs
 [ -f "$MODPATH/common/install.sh" ] && . $MODPATH/common/install.sh
 
 ui_print "   Installing for $ARCH SDK $API device..."
