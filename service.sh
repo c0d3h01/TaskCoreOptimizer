@@ -1,11 +1,11 @@
 #!/system/bin/sh
 #
-#  Core Task Optimizer 
+#  Core Task Optimizer
 #  Version: v1.1.3
-#  
+#
 #  A lightweight system optimization tool for Linux systems that enhances
 #  performance through task prioritization and resource allocation.
-#   
+#
 # MIT License
 #
 # Copyright (c) 2024 c0d3h01
