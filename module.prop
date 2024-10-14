@@ -4,4 +4,4 @@ version=v1.1.3
 versionCode=113
 author=c0d3h01 @github
 description=Enhances system performance by prioritizing critical tasks on high-performance.
-updateJson=
+updateJson=https://raw.githubusercontent.com/c0d3h01/TaskCoreOptimizer/refs/heads/main/update.json
