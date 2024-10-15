@@ -74,26 +74,22 @@ void logError(const string& message, const string& logFile) {
 // Execute a shell command and log the output .
 string executeCommand(const string& command, const string& logFilePath) {  
     string result;
-    ofstream logFile(logFilePath, ios::app);
+    FILE* pipe = popen(command.c_str(), "r");
     
-    if (logFile.is_open()) { 
-        logFile << "Executing command: " << command << endl; 
-        
-        FILE* pipe = popen(command.c_str(), "r");
-        if (pipe) {
-            char buffer[128];
-            while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-                result += buffer;
-            }
-            int status = pclose(pipe);
-            logFile << "Command execution result: " << status << endl;
-            logFile << "Output: " << result << endl;
-        } else {
-            logFile << "Failed to execute command" << endl;
+    if (pipe) {
+        char buffer[128];
+        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+            result += buffer;
         }
-        logFile.close();
+        pclose(pipe);
+        
+        ofstream logFile(logFilePath, ios::app);
+        if (logFile.is_open()) {
+            logFile << "Executed: " << command << endl;
+            logFile.close();
+        }
     } else {
-        cerr << "Unable to open log file: " << logFilePath << endl;
+        cerr << "Failed to execute command: " << command << endl;
     }
     
     return result;
@@ -357,7 +353,10 @@ void changeTaskRtIdle(const string& taskName) {
 int main() {
     try {
         // Create log directory
-        filesystem::create_directories("/data/adb/modules/task_optimizer/logs/");
+        filesystem::create_directories(LOG_DIR);
+        ofstream logFile(LOG_DIR + "task-optimizer-main.log", ios::app);
+        logFile << "" << endl;
+        logFile << "Core Task Optimizer v1.1.4 started" << endl;
         
         // Set intent action and category
         string INTENT_ACTION = "android.intent.action.MAIN";
@@ -445,9 +444,13 @@ int main() {
         for (const string& taskName : TASK_NAMES_IO_PRIO) {
             changeTaskIoPrio(taskName, 3, 0);
         }
-
+        logFile << "" << endl;
+        logFile << "Core Task Optimizer v1.1.4 finished successfully" << endl;
+        logFile.close();
     } catch (const exception& e) {
-        logError(string("Exception occurred: ") + e.what(), LOG_DIR + "error.log");
+        ofstream errorLog(LOG_DIR + "error.log", ios::app);
+        errorLog << "Exxception occurred: " << e.what() << endl;
+        errorLog.close();
         return 1;
     }
 
