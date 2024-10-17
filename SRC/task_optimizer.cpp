@@ -346,10 +346,29 @@ void changeTaskHighPrio(const string& taskName) {
     changeTaskNice(taskName, -20);
 }
 
+void changeTaskMediumPrio(const string& taskName) {
+    // Set nice value to -10 (between high priority -20 and default 0)
+    changeTaskNice(taskName, -10);
+    
+    // Set real-time priority to a medium value (e.g., 25)
+    changeTaskRt(taskName, 25);
+    
+    // Pin to a mix of performance and efficiency cores
+    // Assuming a big.LITTLE architecture with 8 cores where 0-3 are LITTLE and 4-7 are big
+    pinProcOnCpus(taskName, "5f");  // This allows the task to run on cores 0-3 and 4-5
+    
+    // Set I/O priority to a medium level
+    changeTaskIoPrio(taskName, 2, 4);  // Class 2 (Best-effort), priority level 4 (middle)
+    
+    // Log the action
+    // logMessage("Set medium priority for task: " + taskName, LOG_DIR + "medium_prio.log");
+}
+
 // Function to change task priority to RT, with idle priority.
 void changeTaskRtIdle(const string& taskName) {
     changeTaskRt(taskName, 0);
 }
+
 int main() {
     try {
         // Create log directory
@@ -367,13 +386,23 @@ int main() {
         string LAUNCHER_PACKAGE = executeCommand(command, LAUNCHER_LOG);
         LAUNCHER_PACKAGE = LAUNCHER_PACKAGE.substr(0, LAUNCHER_PACKAGE.find('\n'));
 
-        // Keep your existing vector definitions
+        // HIGH definitions.
         vector<string> TASK_NAMES_HIGH_PRIO = {
             "servicemanag", "zygote", "writeback", "kblockd", "rcu_tasks_kthre", "ufs_clk_gating",
             "mmc_clk_gate", "system", "kverityd", "speedup_resume_wq", "load_tp_fw_wq", "tcm_freq_hop",
             "touch_delta_wq", "tp_async", "wakeup_clk_wq", "thread_fence", "Input"
         };
 
+        // MID task list definitions.
+        vector<string> TASK_NAMES_MEDIUM_PRIO = {
+        "kswapd", "oom_reaper", "ion_system_heap", "dmabuf_system_heap", "f2fs_flush-*", "jbd2/*",
+        "mdss_fb", "mdss_disp_wake", "vsync_retire_work", "pq@", "kcompactd",
+        "ksm_scan_thread", "khugepaged", "writeback", "cfg80211", "irq/*-pcie",
+        "mmcqd/*", "jbd2/*-*", "ext4-rsv-conver", "ext4lazyinit", "binder:*_1",
+        "binder:*_2", "binder:*_3", "binder:*_4", "hwcomposer-*", "kworker/*+"
+        };
+
+        // LOW Task definitions.
         vector<string> TASK_NAMES_LOW_PRIO = {"ipawq", "iparepwq", "wlan_logging_th"};
 
         vector<string> TASK_NAMES_RT_FF = {
@@ -385,21 +414,26 @@ int main() {
         vector<string> TASK_NAMES_RT_IDLE = {"f2fs_gc"};
         vector<string> TASK_NAMES_IO_PRIO = {"f2fs_gc"};
 
-        // Input dispatcher/reader
+        // HIGH_PRIO, Input dispatcher/reader.
         for (const string& taskName : TASK_NAMES_HIGH_PRIO) {
             changeTaskHighPrio(taskName);
         }
 
-        // Render thread
-        pinThreadOnCpus(LAUNCHER_PACKAGE, "RenderThread|GLThread", "ff");
-        pinThreadOnCpus(LAUNCHER_PACKAGE, 
-                      "GPU completion|HWC release|hwui|FramePolicy|ScrollPolicy|ged-swd", 
-                      "0f");
+        // Handle medium priority tasks.
+        for (const string& taskName : TASK_NAMES_MEDIUM_PRIO) {
+            changeTaskMediumPrio(taskName);
+        }
 
-        // Not important
+        // LOW_PRIO, Not important.
         for (const string& taskName : TASK_NAMES_LOW_PRIO) {
             changeTaskNice(taskName, 0);
         }
+
+        // Render thread
+        pinThreadOnCpus(LAUNCHER_PACKAGE, "RenderThread|GLThread", "ff");
+        pinThreadOnCpus(LAUNCHER_PACKAGE, "GPU completion|HWC release|hwui|FramePolicy|ScrollPolicy|ged-swd", "0f");
+
+
 
         // Graphics workers are prioritized to run on perf cores
         changeIrqAffinity("msm_drm|fts", "80");
@@ -444,9 +478,11 @@ int main() {
         for (const string& taskName : TASK_NAMES_IO_PRIO) {
             changeTaskIoPrio(taskName, 3, 0);
         }
+
         logFile << "" << endl;
         logFile << "Core Task Optimizer v1.1.4 finished successfully" << endl;
         logFile.close();
+
     } catch (const exception& e) {
         ofstream errorLog(LOG_DIR + "error.log", ios::app);
         errorLog << "Exxception occurred: " << e.what() << endl;
